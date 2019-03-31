@@ -7,7 +7,7 @@ https://api.cloudflare.com/#dns-records-for-a-zone-properties
 """
 
 import json
-import logging as log
+import logging as logger
 
 try:
     # python 2
@@ -33,19 +33,21 @@ def request(method, action, param=None, **params):
     if param:
         params.update(param)
 
-    log.debug("$s %s : params:%s", action, params)
+    logger.info("$s %s : params:%s", action, params)
     if PROXY:
         conn = HTTPSConnection(PROXY)
         conn.set_tunnel(API_SITE, 443)
     else:
         conn = HTTPSConnection(API_SITE)
 
-    if method in ['PUT', 'POST']:
+    if method in ['PUT', 'POST', 'PATCH']:
         # 从public_v(4,6)获取的IP是bytes类型，在json.dumps时会报TypeError
         params['content'] = str(params.get('content'))
         params = json.dumps(params)
-    else:
-        params = urllib.urlencode(params)
+    else:  # (GET, DELETE) where DELETE doesn't require params in Cloudflare
+        if params:
+            action += '?' + urllib.urlencode(params)
+        params = None
     conn.request(method, '/client/v4/zones' + action, params,
                  {"Content-type": "application/json",
                   "X-Auth-Email": ID,
@@ -57,6 +59,7 @@ def request(method, action, param=None, **params):
         raise Exception(res)
     else:
         data = json.loads(res.decode('utf8'))
+        logger.debug('%s : result:%s', action, data)
         if not data:
             raise Exception("Empty Response")
         elif data.get('success'):
@@ -70,12 +73,9 @@ def get_zone_id(domain):
         切割域名获取主域名ID(Zone_ID)
         https://api.cloudflare.com/#zone-list-zones
     """
-    if len(domain.split('.')) > 2:
-        main = domain.split('.', 1)[1]
-    else:
-        main = domain
-    res = request('GET', '', name=main)
-    zoneid = res[0].get('id')
+    zones = request('GET', '', per_page=50)
+    zone = next((z for z in zones if domain.endswith(z.get('name'))), None)
+    zoneid = zone and zone['id']
     return zoneid
 
 
@@ -85,20 +85,21 @@ def get_records(zoneid, **conditions):
            返回满足条件的所有记录[]
            TODO 大于100翻页
     """
+    cache_key = zoneid + "_" + conditions.get('name', "") + "_" + conditions.get('type', "")
     if not hasattr(get_records, 'records'):
         get_records.records = {}  # "静态变量"存储已查询过的id
         get_records.keys = ('id', 'type', 'name', 'content', 'proxied', 'ttl')
 
     if not zoneid in get_records.records:
-        get_records.records[zoneid] = {}
-        data = request('GET', '/' + zoneid + '/dns_records', per_page=100)
+        get_records.records[cache_key] = {}
+        data = request('GET', '/' + zoneid + '/dns_records', per_page=100, **conditions)
         if data:
             for record in data:
-                get_records.records[zoneid][record['id']] = {
+                get_records.records[cache_key][record['id']] = {
                     k: v for (k, v) in record.items() if k in get_records.keys}
 
     records = {}
-    for (zid, record) in get_records.records[zoneid].items():
+    for (zid, record) in get_records.records[cache_key].items():
         for (k, value) in conditions.items():
             if record.get(k) != value:
                 break
@@ -111,12 +112,13 @@ def update_record(domain, value, record_type="A"):
     """
     更新记录
     """
-    log.debug(">>>>>%s(%s)", domain, record_type)
+    logger.info(">>>>>%s(%s)", domain, record_type)
     zoneid = get_zone_id(domain)
     if not zoneid:
         raise Exception("invalid domain: [ %s ] " % domain)
 
     records = get_records(zoneid, name=domain, type=record_type)
+    cache_key = zoneid + "_" + domain + "_" + record_type
     result = {}
     if records:  # update
         # https://api.cloudflare.com/#dns-records-for-a-zone-update-dns-record
@@ -125,8 +127,8 @@ def update_record(domain, value, record_type="A"):
                 res = request('PUT', '/' + zoneid + '/dns_records/' + record['id'],
                               type=record_type, content=value, name=domain)
                 if res:
-                    get_records.records[zoneid][rid]['content'] = value
-                    result[rid] = res.get("record")
+                    get_records.records[cache_key][rid]['content'] = value
+                    result[rid] = res.get("name")
                 else:
                     result[rid] = "Update fail!\n" + str(res)
             else:
@@ -136,9 +138,7 @@ def update_record(domain, value, record_type="A"):
         res = request('POST', '/' + zoneid + '/dns_records',
                       type=record_type, name=domain, content=value, proxied=False, ttl=600)
         if res:
-            get_records.records[zoneid][res['id']] = res
-            get_records.records[zoneid][res['id']].update(
-                value=value, type=record_type)
+            get_records.records[cache_key][res['id']] = res
             result = res
         else:
             result = domain + " created fail!"

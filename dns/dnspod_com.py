@@ -7,7 +7,7 @@ http://www.dnspod.com/docs/domains.html
 """
 
 import json
-import logging as log
+import logging as logger
 try:
     # python 2
     from httplib import HTTPSConnection
@@ -34,8 +34,9 @@ def request(action, param=None, **params):
     if param:
         params.update(param)
 
-    params.update({'user_token': "%s,%s" % (ID, TOKEN), 'format': 'json'})
-    log.debug("%s : params:%s", action, params)
+    params.update({'login_token': '***', 'format': 'json'})
+    logger.info("%s : params:%s", action, params)
+    params['login_token'] = "%s,%s" % (ID, TOKEN)
 
     if PROXY:
         conn = HTTPSConnection(PROXY)
@@ -56,6 +57,7 @@ def request(action, param=None, **params):
         raise Exception(res)
     else:
         data = json.loads(res.decode('utf8'))
+        logger.debug('%s : result:%s', action, data)
         if not data:
             raise Exception("empty response")
         elif data.get("status", {}).get("code") == "1":
@@ -141,7 +143,7 @@ def update_record(domain, value, record_type="A"):
     """
     更新记录
     """
-    log.debug(">>>>>%s(%s)", domain, record_type)
+    logger.info(">>>>>%s(%s)", domain, record_type)
     domainid, sub = get_domain_info(domain)
     if not domainid:
         raise Exception("invalid domain: [ %s ] " % domain)
@@ -152,7 +154,7 @@ def update_record(domain, value, record_type="A"):
         # http://www.dnspod.cn/docs/records.html#record-modify
         for (did, record) in records.items():
             if record["value"] != value:
-                log.debug(sub, record)
+                logger.debug(sub, record)
                 line = record["line"].replace(
                     "Default", "default").encode("utf-8")
                 res = request('Record.Modify', record_id=did, record_line=line, value=value,

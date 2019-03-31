@@ -7,7 +7,7 @@ http://www.dnspod.cn/docs/domains.html
 """
 
 import json
-import logging as log
+import logging as logger
 try:
     # python 2
     from httplib import HTTPSConnection
@@ -34,8 +34,9 @@ def request(action, param=None, **params):
     if param:
         params.update(param)
 
-    params.update({'login_token': "%s,%s" % (ID, TOKEN), 'format': 'json'})
-    log.debug("%s : params:%s", action, params)
+    params.update({'login_token': '***', 'format': 'json'})
+    logger.info("%s : params:%s", action, params)
+    params['login_token'] = "%s,%s" % (ID, TOKEN)
 
     if PROXY:
         conn = HTTPSConnection(PROXY)
@@ -50,9 +51,11 @@ def request(action, param=None, **params):
     conn.close()
 
     if response.status < 200 or response.status >= 300:
+        logger.warn('%s : error:%s', action, res) 
         raise Exception(res)
     else:
         data = json.loads(res.decode('utf8'))
+        logger.debug('%s : result:%s', action, data)
         if not data:
             raise Exception("empty response")
         elif data.get("status", {}).get("code") == "1":
@@ -78,9 +81,11 @@ def get_domain_info(domain):
                 sub = ".".join(domain_split)
                 break
         else:
+            logger.warn('domain_id: %s, sub: %s', did, sub)
             return None, None
-        if not sub: # root domain根域名https://github.com/NewFuture/DDNS/issues/9
+        if not sub:  # root domain根域名https://github.com/NewFuture/DDNS/issues/9
             sub = '@'
+    logger.info('domain_id: %s, sub: %s', did, sub)
     return did, sub
 
 
@@ -97,11 +102,10 @@ def get_domain_id(domain):
         return get_domain_id.domain_list[domain]
     else:
         info = request('Domain.Info', domain=domain)
-        if info and info.get('status', {}).get('code') == "1":
-            did = info.get("domain", {}).get("id")
-            if did:
-                get_domain_id.domain_list[domain] = did
-                return did
+        did = info.get("domain", {}).get("id")
+        if did:
+            get_domain_id.domain_list[domain] = did
+            return did
 
 
 def get_records(did, **conditions):
@@ -138,7 +142,7 @@ def update_record(domain, value, record_type="A"):
     """
     更新记录
     """
-    log.debug(">>>>>%s(%s)", domain, record_type)
+    logger.info(">>>>>%s(%s)", domain, record_type)
     domainid, sub = get_domain_info(domain)
     if not domainid:
         raise Exception("invalid domain: [ %s ] " % domain)
@@ -149,7 +153,7 @@ def update_record(domain, value, record_type="A"):
         # http://www.dnspod.cn/docs/records.html#record-modify
         for (did, record) in records.items():
             if record["value"] != value:
-                log.debug(sub, record)
+                logger.debug(sub, record)
                 res = request('Record.Modify', record_id=did, record_line=record["line"].encode(
                     "utf-8"), value=value, sub_domain=sub, domain_id=domainid, record_type=record_type)
                 if res:

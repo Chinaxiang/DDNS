@@ -1,30 +1,45 @@
-DDNS
+[DDNS](https://github.com/NewFuture/DDNS)
 ===================
-自动更新DNS解析 到本机IP地址,支持 ipv4和ipv6 以 本地(内网)IP 和 公网IP。
-代理模式,支持自动创建域名记录。
 
-### 功能
+Build Status [![Build Status](https://dev.azure.com/NewFuture-CI/ddns-ci/_apis/build/status/NewFuture.DDNS?branchName=master)](https://dev.azure.com/NewFuture-CI/ddns-ci/_build/latest?definitionId=2&branchName=master) [![Build Status](https://travis-ci.com/NewFuture/DDNS.svg?branch=master)](https://travis-ci.com/NewFuture/DDNS) [![latest deploy](https://vsrm.dev.azure.com/NewFuture-CI/_apis/public/Release/badge/2ab09aad-c4b4-4c57-ab1b-2fb92c485664/1/1)](https://github.com/NewFuture/DDNS/releases/latest)
 
-* [x] 多个域名支持
-* [x] 多级域名解析
-* [x] 内网IP
-* [x] 公网IP
-* [x] ipv6支持
-* [x] 代理模式(http代理)
-* [x] 定时任务
-* [x] 自动创建记录
-* [x] 多系统(Widnows, Linux, MacOS)
-* [x] 兼容 python2 和 python3 或无python环境
-* [x] 正则选取支持(@rufengsuixing)
-* [x] 文件缓存(减少服务器IP请求)
-* [x] 二进制打包
-* [x] 多代理自动切换
-* [x] 多厂商兼容支持:
-	* [x] [DNSPOD](https://www.dnspod.cn/)
-	* [x] [阿里DNS](http://www.alidns.com/)
-	* [x] [DNS.COM](https://www.dns.com/)(@loftor-git)
-	* [x] [DNSPOD国际版](https://www.dnspod.com/)
-	* [x] [CloudFlare](https://www.cloudflare.com/)(@tongyifan)
+| Ubuntu | Windows Python3.7 | Windows Python2.7 | Mac Python3.7 | Mac Python2.7 |
+| :-----: | :-----: | :-----: | :-----: | :-----: |
+| ![Travis Build ](https://img.shields.io/travis/com/NewFuture/DDNS.svg?label=Ubuntu&style=flat-square) | [![Build Status](https://dev.azure.com/NewFuture-CI/ddns-ci/_apis/build/status/NewFuture.DDNS?branchName=master&jobName=Windows&configuration=Python37)](https://dev.azure.com/NewFuture-CI/ddns-ci/_build/latest?definitionId=2&branchName=master) | [![Build Status](https://dev.azure.com/NewFuture-CI/ddns-ci/_apis/build/status/NewFuture.DDNS?branchName=master&jobName=Windows&configuration=Python27)](https://dev.azure.com/NewFuture-CI/ddns-ci/_build/latest?definitionId=2&branchName=master) | [![Build Status](https://dev.azure.com/NewFuture-CI/ddns-ci/_apis/build/status/NewFuture.DDNS?branchName=master&jobName=MacOS&configuration=Python37)](https://dev.azure.com/NewFuture-CI/ddns-ci/_build/latest?definitionId=2&branchName=master) | [![Build Status](https://dev.azure.com/NewFuture-CI/ddns-ci/_apis/build/status/NewFuture.DDNS?branchName=master&jobName=MacOS&configuration=Python27)](https://dev.azure.com/NewFuture-CI/ddns-ci/_build/latest?definitionId=2&branchName=master) |
+
+------------
+
+
+>自动更新DNS解析 到本机IP地址,支持 ipv4和ipv6 以 本地(内网)IP 和 公网IP。
+>代理模式,支持自动创建域名记录。
+
+### Features
+* 域名支持:
+    * [x] 多个域名支持
+    * [x] 多级域名解析
+    * [x] 自动创建新记录
+* IP类型:
+    * [x] 内网IP
+    * [x] 公网IP
+    * [x] ipv6支持
+    * [x] 正则选取支持(@rufengsuixing)
+* 兼容和跨平台:
+    * [x] 多系统(Widnows, Linux, MacOS)
+    * [x] python2 
+    * [x] python3
+    * [x] 无Python可执行文件
+* 网络代理:
+    * [x] http代理支持
+    * [x] 多代理自动切换
+* 服务商支持:
+    * [x] [DNSPOD](https://www.dnspod.cn/)
+    * [x] [阿里DNS](http://www.alidns.com/)
+    * [x] [DNS.COM](https://www.dns.com/)(@loftor-git)
+    * [x] [DNSPOD国际版](https://www.dnspod.com/)
+    * [x] [CloudFlare](https://www.cloudflare.com/)(@tongyifan)
+* 其他: 
+	* [x] 可设置定时任务
+	* [x] 本地文件缓存(减少服务器请求和查询)
 
 ### TODO:
 * [ ] 腾讯云
@@ -36,9 +51,10 @@ DDNS
 
 ### 1.下载
 
-* 单文件版(二进制编译,无需python环境,preview)
-	* Windows [ddns.exe](https://github.com/NewFuture/DDNS/releases/)
-	* Linux （仅Ubuntu测试) [ddns](https://github.com/NewFuture/DDNS/releases/)
+* 二进制版(无需python环境)
+	* Windows [ddns.exe](https://github.com/NewFuture/DDNS/releases/latest)
+	* Linux （仅Ubuntu测试) [ddns](https://github.com/NewFuture/DDNS/releases/latest)
+	* Mac OSX [ddns-oxs](https://github.com/NewFuture/DDNS/releases/latest)
 * 源码运行(需要python环境)
 	1. clone 或者[下载此仓库](https://github.com/NewFuture/DDNS/archive/master.zip)并解压
 	2. 运行./run.py (widnows 双击`run.bat`或者运行`python run.py`)
@@ -57,7 +73,7 @@ DDNS
 3. 修改配置,`ipv4`和`ipv6`字段，无则设为`[]`(此时不会解析和更新对应IP),详细参照配置说明
 
 
-## 配置
+## 详细配置
 
 <details open>
 
@@ -75,7 +91,7 @@ python run.py -c /path/to/config.json
 
 | key  | type |  required |default |  comment|
 | ------| ------- | --------- | ---- | ----------- | 
-| id | string |  Yes | 无 | api授权id |
+| id | string |  Yes | 无 | api授权id(`cloudflare`为登录邮箱) |
 | token | string | Yes | 无 | api授权token | 
 | dns | string | No | `dnspod` | dns服务商,阿里为`alidns`,DNS.COM为`dnscom`,DNSPOD国际版为(`dnspod_com`)，`cloudflare`| 
 | ipv4 | array | No | [] | ipv4 域名列表 |
@@ -99,16 +115,17 @@ python run.py -c /path/to/config.json
 
 ```json
 {
+    "$schema": "https://ddns.newfuture.cc/schema.json",
 	"id": "12345",
 	"token": "mythokenkey",
 	"dns": "dnspod 或 dnspod_com 或 alidns 或 dnscom 或 cloudflare",
 	"ipv4": [
-		"dns.newfuture.xyz",
-		"ipv4.dns.newfuture.xyz"
+		"ddns.newfuture.xyz",
+		"ipv4.ddns.newfuture.xyz"
 	],
 	"ipv6": [
-		"dns.newfuture.xyz",
-		"ipv6.dns.newfuture.xyz"
+		"ddns.newfuture.xyz",
+		"ipv6.ddns.newfuture.xyz"
 	],
 	"index4": 0,
 	"index6": "public",
@@ -137,4 +154,3 @@ python run.py -c /path/to/config.json
 运行 `sudo ./task.sh`
 
 </details>
-
